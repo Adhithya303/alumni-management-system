@@ -33,6 +33,10 @@ const assignSkill = async (req, res, next) => {
   const { id } = req.params;
   const { skill_id } = req.body;
 
+  if (!skill_id) {
+    return sendResponse(res, 400, false, null, 'skill_id is required');
+  }
+
   try {
     await pool.query('INSERT INTO ALUMNI_SKILL (alumni_id, skill_id) VALUES (?, ?)', [id, skill_id]);
     return sendResponse(res, 201, true, null, 'Skill assigned successfully');

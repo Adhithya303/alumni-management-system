@@ -1,136 +1,216 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import api from '../api/client'
-import FormField from '../components/FormField'
-import Table from '../components/Table'
+import { useEffect, useState } from 'react'
+import axiosClient from '../api/axiosClient'
+import AlertMessage from '../components/AlertMessage'
+import LoadingSpinner from '../components/LoadingSpinner'
+import { useAuth } from '../context/AuthContext'
+import { formatDate } from '../utils/helpers'
 
 const Events = () => {
+  const { user } = useAuth()
   const [events, setEvents] = useState([])
-  const [alumni, setAlumni] = useState([])
   const [participants, setParticipants] = useState([])
-  const [selectedEvent, setSelectedEvent] = useState('')
+  const [selectedEvent, setSelectedEvent] = useState(null)
+  const [showModal, setShowModal] = useState(false)
+  const [showAddEvent, setShowAddEvent] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
 
-  const addEventForm = useForm()
-  const participationForm = useForm()
-
-  const alumniOptions = useMemo(() => {
-    const map = new Map()
-    alumni.forEach((item) => {
-      if (!map.has(item.alumni_id)) map.set(item.alumni_id, item.name)
-    })
-    return Array.from(map.entries()).map(([value, label]) => ({ value, label }))
-  }, [alumni])
-
-  const eventOptions = events.map((event) => ({ value: event.event_id, label: event.event_name }))
-
-  const loadData = async () => {
-    const [eventsRes, alumniRes] = await Promise.all([api.get('/events'), api.get('/alumni')])
-    setEvents(eventsRes.data.data || [])
-    setAlumni(alumniRes.data.data || [])
-  }
+  const [eventForm, setEventForm] = useState({ event_name: '', event_date: '', location: '' })
+  const [eventErrors, setEventErrors] = useState({})
 
   useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadParticipants = async (eventId) => {
-    if (!eventId) {
-      setParticipants([])
-      return
+    const loadEvents = async () => {
+      try {
+        setLoading(true)
+        const response = await axiosClient.get('/events')
+        setEvents(response.data.data || [])
+      } catch (err) {
+        const message = err.response?.data?.message || err.message || 'An error occurred'
+        setError(message)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    const response = await api.get(`/events/${eventId}/participants`)
-    setParticipants(response.data.data || [])
+    loadEvents()
+  }, [])
+
+  const validateEventForm = () => {
+    const nextErrors = {}
+    if (!eventForm.event_name.trim()) nextErrors.event_name = 'Event name is required'
+    if (!eventForm.event_date) nextErrors.event_date = 'Event date is required'
+    setEventErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
   }
 
-  useEffect(() => {
-    loadParticipants(selectedEvent)
-  }, [selectedEvent])
+  const addEvent = async (event) => {
+    event.preventDefault()
+    if (!validateEventForm()) return
 
-  const onAddEvent = async (values) => {
-    await api.post('/events', values)
-    addEventForm.reset()
-    await loadData()
+    try {
+      setActionLoading(true)
+      setError('')
+      const response = await axiosClient.post('/events', eventForm)
+      const newEvent = { event_id: response.data.data?.event_id, ...eventForm }
+      setEvents((prev) => [newEvent, ...prev])
+      setEventForm({ event_name: '', event_date: '', location: '' })
+      setEventErrors({})
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'An error occurred'
+      setError(message)
+    } finally {
+      setActionLoading(false)
+    }
   }
 
-  const onParticipate = async (values) => {
-    await api.post(`/events/${values.event_id}/participate`, {
-      alumni_id: values.alumni_id,
-      role: values.role,
-    })
-    participationForm.reset({ ...values, alumni_id: '', role: '' })
-    setSelectedEvent(values.event_id)
-    await loadParticipants(values.event_id)
+  const openParticipants = async (eventItem) => {
+    try {
+      setActionLoading(true)
+      setError('')
+      const response = await axiosClient.get(`/events/${eventItem.event_id}/participants`)
+      setParticipants(response.data.data || [])
+      setSelectedEvent(eventItem)
+      setShowModal(true)
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'An error occurred'
+      setError(message)
+    } finally {
+      setActionLoading(false)
+    }
   }
+
+  if (loading) return <LoadingSpinner />
 
   return (
-    <div className="page">
-      <h2>Events</h2>
+    <div className="fade-in">
+      <AlertMessage type="danger" message={error} onClose={() => setError('')} />
+      {actionLoading ? <LoadingSpinner /> : null}
 
-      <div className="card">
-        <h3>Add Event</h3>
-        <form className="form" onSubmit={addEventForm.handleSubmit(onAddEvent)}>
-          <FormField label="Event Name" register={addEventForm.register} name="event_name" required />
-          <FormField label="Event Date" type="date" register={addEventForm.register} name="event_date" required />
-          <FormField label="Location" register={addEventForm.register} name="location" required />
-          <button type="submit">Add Event</button>
-        </form>
+      {user?.role === 'admin' ? (
+        <div className="card p-3 mb-3">
+          <button
+            type="button"
+            className="btn btn-outline-primary mb-3"
+            onClick={() => setShowAddEvent((prev) => !prev)}
+          >
+            {showAddEvent ? 'Hide Add Event' : 'Add Event'}
+          </button>
+          {showAddEvent ? (
+            <form onSubmit={addEvent}>
+              <div className="row">
+                <div className="col-md-4 mb-3">
+                  <label className="form-label">Event Name</label>
+                  <input
+                    className="form-control"
+                    value={eventForm.event_name}
+                    onChange={(e) => setEventForm({ ...eventForm, event_name: e.target.value })}
+                  />
+                  {eventErrors.event_name ? <div className="text-danger small">{eventErrors.event_name}</div> : null}
+                </div>
+                <div className="col-md-4 mb-3">
+                  <label className="form-label">Event Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={eventForm.event_date}
+                    onChange={(e) => setEventForm({ ...eventForm, event_date: e.target.value })}
+                  />
+                  {eventErrors.event_date ? <div className="text-danger small">{eventErrors.event_date}</div> : null}
+                </div>
+                <div className="col-md-4 mb-3">
+                  <label className="form-label">Location</label>
+                  <input
+                    className="form-control"
+                    value={eventForm.location}
+                    onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
+                  />
+                </div>
+              </div>
+              <button className="btn btn-primary" type="submit" disabled={actionLoading}>
+                Add Event
+              </button>
+            </form>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="card p-3">
+        <h5 className="mb-3">Events</h5>
+        <div className="table-responsive">
+          <table className="table table-striped align-middle">
+            <thead>
+              <tr>
+                <th>Event Name</th>
+                <th>Date</th>
+                <th>Location</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map((eventItem) => (
+                <tr key={eventItem.event_id}>
+                  <td>{eventItem.event_name}</td>
+                  <td>{formatDate(eventItem.event_date)}</td>
+                  <td>{eventItem.location || '—'}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={() => openParticipants(eventItem)}
+                    >
+                      View Participants
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="card">
-        <h3>Register Alumni for Event</h3>
-        <form className="form" onSubmit={participationForm.handleSubmit(onParticipate)}>
-          <FormField label="Event" type="select" register={participationForm.register} name="event_id" required options={eventOptions} />
-          <FormField label="Alumni" type="select" register={participationForm.register} name="alumni_id" required options={alumniOptions} />
-          <FormField label="Role" register={participationForm.register} name="role" />
-          <button type="submit">Register</button>
-        </form>
-      </div>
-
-      <div className="card">
-        <h3>Events</h3>
-        <Table
-          columns={['Event', 'Date', 'Location', 'Participants']}
-          data={events}
-          renderRow={(item) => (
-            <tr key={item.event_id}>
-              <td>{item.event_name}</td>
-              <td>{item.event_date ? new Date(item.event_date).toLocaleDateString() : '-'}</td>
-              <td>{item.location}</td>
-              <td>
-                <button type="button" onClick={() => setSelectedEvent(item.event_id)}>
-                  View Participants
-                </button>
-              </td>
-            </tr>
-          )}
-        />
-      </div>
-
-      <div className="card">
-        <h3>Participants</h3>
-        <label className="field">
-          <span>Select event</span>
-          <select value={selectedEvent} onChange={(e) => setSelectedEvent(e.target.value)}>
-            <option value="">Select</option>
-            {eventOptions.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
-
-        <Table
-          columns={['Name', 'Email', 'Role']}
-          data={participants}
-          renderRow={(item) => (
-            <tr key={item.alumni_id}>
-              <td>{item.name}</td>
-              <td>{item.email}</td>
-              <td>{item.role}</td>
-            </tr>
-          )}
-        />
-      </div>
+      {showModal ? (
+        <>
+          <div className="modal show" style={{ display: 'block' }} tabIndex="-1" role="dialog">
+            <div className="modal-dialog modal-lg" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Participants - {selectedEvent?.event_name}</h5>
+                  <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <div className="table-responsive">
+                    <table className="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Role</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {participants.map((participant) => (
+                          <tr key={participant.alumni_id}>
+                            <td>{participant.name}</td>
+                            <td>{participant.email}</td>
+                            <td>{participant.role || 'Participant'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop show"></div>
+        </>
+      ) : null}
     </div>
   )
 }

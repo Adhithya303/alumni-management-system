@@ -13,6 +13,10 @@ const getCompanies = async (req, res, next) => {
 const addCompany = async (req, res, next) => {
   const { company_name, industry, location } = req.body;
 
+  if (!company_name) {
+    return sendResponse(res, 400, false, null, 'company_name is required');
+  }
+
   try {
     const [result] = await pool.query(
       'INSERT INTO COMPANY (company_name, industry, location) VALUES (?, ?, ?)',

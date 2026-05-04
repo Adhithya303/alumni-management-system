@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import api from '../api/client'
 import Modal from '../components/Modal'
@@ -70,8 +70,8 @@ const Alumni = () => {
         columns={['Name', 'Email', 'Phone', 'Degree', 'Job', 'Company', 'Actions']}
         data={alumniRows}
         renderRow={(item) => (
-          <>
-            <tr key={item.alumni_id}>
+          <Fragment key={item.alumni_id}>
+            <tr>
               <td><button className="link-btn" type="button" onClick={() => loadProfile(item.alumni_id)}>{item.name}</button></td>
               <td>{item.email}</td>
               <td>{item.phone || '-'}</td>
@@ -94,7 +94,7 @@ const Alumni = () => {
                 </td>
               </tr>
             ) : null}
-          </>
+          </Fragment>
         )}
       />
 

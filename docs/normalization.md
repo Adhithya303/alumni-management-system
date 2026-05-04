@@ -17,7 +17,7 @@ Issue in UNF:
 - Multi-valued attributes (skills/events) and repeating groups violate atomicity.
 
 Fix applied:
-- Split into separate tables: `ALUMNI`, `EDUCATION`, `JOB`, `SKILL`, `ALUMNI_SKILL`, `EVENT`, `EVENT_PARTICIPATION`.
+- Split into separate tables: `ALUMNI`, `USER_ACCOUNT`, `EDUCATION`, `JOB`, `COMPANY`, `SKILL`, `ALUMNI_SKILL`, `EVENT`, `EVENT_PARTICIPATION`.
 - Each column now stores a single atomic value.
 - Repeating groups are removed and represented as rows in relationship tables.
 
@@ -32,6 +32,7 @@ Condition:
 Validation:
 - `ALUMNI_SKILL(alumni_id, skill_id)` has only key columns, so no non-key partial dependency.
 - `EVENT_PARTICIPATION(alumni_id, event_id, role)` uses `role` as a non-key attribute dependent on the full composite key `(alumni_id, event_id)`.
+- `USER_ACCOUNT(user_id, alumni_id, username, password, role)` uses a single primary key, so no partial dependency exists.
 
 Result:
 - No partial dependencies exist.

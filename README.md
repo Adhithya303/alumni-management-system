@@ -1,8 +1,8 @@
 # Alumni Database Management System
 
 A mini full-stack project for managing alumni data using:
-- **Frontend:** React + Vite
-- **Backend:** Node.js + Express.js
+- **Frontend:** React 18 + Vite + React Router + Axios + Bootstrap (CDN)
+- **Backend:** Node.js + Express.js + JWT auth
 - **Database:** MySQL
 
 ## Project Structure
@@ -38,10 +38,16 @@ Set `.env` values:
 - `JWT_SECRET`
 - `PORT=5000`
 
-Run backend:
+Run backend (recommended entrypoint):
 
 ```bash
-npm run start
+node index.js
+```
+
+Legacy entrypoint:
+
+```bash
+node server.js
 ```
 
 ### 3) Frontend Setup

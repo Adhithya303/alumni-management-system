@@ -82,6 +82,10 @@ const updateAlumni = async (req, res, next) => {
   const { id } = req.params;
   const { name, email, phone, dob, gender } = req.body;
 
+  if (!name || !email) {
+    return sendResponse(res, 400, false, null, 'name and email are required');
+  }
+
   try {
     const [result] = await pool.query(
       `UPDATE ALUMNI

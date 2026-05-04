@@ -10,8 +10,10 @@ const register = async (req, res, next) => {
     return sendResponse(res, 400, false, null, 'Name, email, username and password are required');
   }
 
-  const connection = await pool.getConnection();
+  let connection;
+
   try {
+    connection = await pool.getConnection();
     await connection.beginTransaction();
 
     const [alumniResult] = await connection.query(
@@ -29,13 +31,17 @@ const register = async (req, res, next) => {
     await connection.commit();
     return sendResponse(res, 201, true, { alumni_id: alumniResult.insertId }, 'User registered successfully');
   } catch (error) {
-    await connection.rollback();
+    if (connection) {
+      await connection.rollback();
+    }
     if (error.code === 'ER_DUP_ENTRY' || error.sqlState === '45000') {
       return sendResponse(res, 400, false, null, error.sqlMessage || error.message);
     }
     return next(error);
   } finally {
-    connection.release();
+    if (connection) {
+      connection.release();
+    }
   }
 };
 

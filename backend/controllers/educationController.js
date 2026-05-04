@@ -15,6 +15,16 @@ const getEducationByAlumni = async (req, res, next) => {
 const addEducation = async (req, res, next) => {
   const { alumni_id, degree, department, college_name, graduation_year } = req.body;
 
+  if (!alumni_id || !degree || !department || !college_name || !graduation_year) {
+    return sendResponse(
+      res,
+      400,
+      false,
+      null,
+      'alumni_id, degree, department, college_name and graduation_year are all required'
+    );
+  }
+
   try {
     const [result] = await pool.query(
       `INSERT INTO EDUCATION (alumni_id, degree, department, college_name, graduation_year)

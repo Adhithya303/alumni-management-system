@@ -13,6 +13,10 @@ const getEvents = async (req, res, next) => {
 const addEvent = async (req, res, next) => {
   const { event_name, event_date, location } = req.body;
 
+  if (!event_name || !event_date) {
+    return sendResponse(res, 400, false, null, 'event_name and event_date are required');
+  }
+
   try {
     const [result] = await pool.query('INSERT INTO EVENT (event_name, event_date, location) VALUES (?, ?, ?)', [
       event_name,
@@ -48,6 +52,10 @@ const getEventParticipants = async (req, res, next) => {
 const participateInEvent = async (req, res, next) => {
   const { id } = req.params;
   const { alumni_id, role } = req.body;
+
+  if (!alumni_id) {
+    return sendResponse(res, 400, false, null, 'alumni_id is required');
+  }
 
   try {
     await pool.query('INSERT INTO EVENT_PARTICIPATION (alumni_id, event_id, role) VALUES (?, ?, ?)', [

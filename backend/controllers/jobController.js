@@ -23,6 +23,10 @@ const getJobsByAlumni = async (req, res, next) => {
 const addJob = async (req, res, next) => {
   const { alumni_id, company_id, job_title, start_date, end_date } = req.body;
 
+  if (!alumni_id || !company_id || !job_title) {
+    return sendResponse(res, 400, false, null, 'alumni_id, company_id and job_title are required');
+  }
+
   try {
     const [result] = await pool.query(
       `INSERT INTO JOB (alumni_id, company_id, job_title, start_date, end_date)
