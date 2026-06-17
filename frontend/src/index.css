@@ -1,0 +1,149 @@
+:root {
+  --primary: #1a3c5e;
+  --primary-light: #2e6da4;
+  --accent: #e8a020;
+  --bg-light: #f4f6f9;
+  --sidebar-bg: #1a3c5e;
+  --text-dark: #1e2733;
+  --text-muted: #6c757d;
+  --success: #28a745;
+  --danger: #dc3545;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-light);
+  color: var(--text-dark);
+  font-family: 'Segoe UI', sans-serif;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.sidebar {
+  width: 240px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  background: var(--sidebar-bg);
+  color: #fff;
+  padding: 1rem 1rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.main-content {
+  margin-left: 240px;
+  padding: 1.5rem 2rem 2rem;
+  min-height: 100vh;
+  width: calc(100% - 240px);
+}
+
+.nav-link-sidebar {
+  color: rgba(255, 255, 255, 0.75);
+  padding: 0.6rem 1rem;
+  display: block;
+  border-radius: 0.4rem;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.nav-link-sidebar:hover,
+.nav-link-sidebar.active {
+  color: #fff;
+  background: var(--primary-light);
+}
+
+.navbar-top {
+  background: #fff;
+  border-bottom: 1px solid #dee2e6;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  margin: 0 0 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-height: 64px;
+  border-radius: 0 0 0.75rem 0.75rem;
+}
+
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+}
+
+.table thead th {
+  background: var(--primary);
+  color: #fff;
+  border-color: #1a3552;
+}
+
+.table {
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.table td,
+.table th {
+  border-color: #e2e8f0;
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 1.5rem;
+  }
+
+  .navbar-top {
+    margin: 0 0 1.5rem;
+  }
+}
+
+.badge-role-admin {
+  background: var(--accent);
+  color: #fff;
+}
+
+.badge-role-alumni {
+  background: var(--primary-light);
+  color: #fff;
+}
+
+.fade-in {
+  animation: fadeInUp 0.3s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
